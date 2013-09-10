@@ -1,5 +1,9 @@
 <?php
 
+/**
+ * dbConnect Open MySQL connection
+ * @return mysqli connection to database
+ */
 $_mySQLi = NULL;
 function dbConnect() {
   $testing = true;
@@ -7,10 +11,11 @@ function dbConnect() {
   if ($_mySQLi)
     return $_mySQLi;
   $host = "localhost";
-  $dbuser = "root";
-  $dbpwd = "";
-  $db = "db";
+  $dbuser = "user";
+  $dbpwd = "pwd";
+  $db = "db_name";
   $_mySQLi = (new mySQLi($host,$dbuser,$dbpwd,$db));
+  $_mySQLi->query("SET NAMES utf8"); //for Russian and Spanish Character set
   return $_mySQLi;
 }
 
@@ -38,6 +43,7 @@ function bind($stmt, $arguments){
   return $success;
 }
   
+  //http://www.php.net/manual/en/mysqli-stmt.bind-result.php#102179
 function fetch($result){    
   $array = array();
   if($result instanceof mysqli_stmt){
@@ -93,19 +99,6 @@ function columnsForTable($table) {
  * @return int Version of schema as determined by timestamps on migrations
  */
 function schemaVersion() {
-  /* $fh = fopen("../../db/schema.php-db", 'r');
-  if ($fh == FALSE || feof($fh))
-    return -1;
-
-  $line = fgets($fh);
-  // http://stackoverflow.com/a/8609840/472768
-  $matches;
-  $match = preg_match("/\d/", $line, $matches, PREG_OFFSET_CAPTURE);
-  if ($match == 0)
-    return -1;
-  $schema_start = $matches[0][1];
-  $schema_str = substr($line, $schema_start);
-  return intval($schema_str); */
   $v = file_get_contents('../../db/.current_version');
   if ($v == FALSE)
     $v = 0;
@@ -181,6 +174,7 @@ function select($table_name, $arguments = [], $limit = true, $order = 'id'){
     $q .= ' LIMIT 1';    // Should only be one result
   $db = dbConnect();
   $stmt = $db->prepare($q);
+  error_log($q);
   bind($stmt, $arguments);
   $stmt->execute();
   $result = fetch($stmt);
@@ -234,5 +228,3 @@ function insert($table_name, $arguments=[]){
   //update static id and class id to new inserted value
   return mysqli_insert_id($db);
 }
-
-?>

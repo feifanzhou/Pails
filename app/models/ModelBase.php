@@ -1,9 +1,11 @@
 <?php
 include_once('../helpers/db_helper.php');
+include_once('../helpers/php_helper.php');
 
-function __autoload($class_name) {
-  include $class_name . '.php';
+function autoload_($class_name) {
+  include_once $class_name . '.php';
 }
+spl_autoload_register('autoload_');
 
 class ModelBase {
   public $id;
@@ -91,6 +93,8 @@ class ModelBase {
   }
 
   public static function find($id) {
+    // TODO: Select UNIX timestamp directly if possible
+    // http://stackoverflow.com/a/4577802/472768
     $table = static::db_table_name();
     $q = "SELECT * FROM $table WHERE id=?";
     $db = dbConnect();
@@ -116,9 +120,10 @@ class ModelBase {
   }
 
   public static function has_one($classname) {
-    $called_class = get_class();
-    if (!in_array($classname, $called_class::$_one_of))
+    $called_class = get_called_class();
+    if (!in_array($classname, $called_class::$_one_of)){
       $called_class::$_one_of[] = lcfirst($classname);
+	}
   }
   public static function has_many($classname_plural) {
     // $_many_of[] = substr($classname_plural, 0, (strlen($classname_plural) - 1));
@@ -134,13 +139,13 @@ class ModelBase {
 
   // http://stackoverflow.com/a/4478690/472768
   public function __get($property) {
-    if (property_exists($this, $property))
-      return $this -> $property;
+    if(property_exists($this, $property))
+      	return $this -> $property;
     // TODO: Sanitize
     $called_class = get_called_class();
+    $db = dbConnect();
     if (in_array($property, $called_class::$_belongs_to)) {
       $foreign_key = $property . '_id';
-      $db = dbConnect();
       $table_name = static::db_table_name();
       $self_id = $this -> id();
       $q1 = "SELECT $foreign_key FROM $table_name WHERE id=$self_id";
@@ -171,20 +176,21 @@ class ModelBase {
       $foreign_table = $property; // Should already be pluralized
       $self_id = $this -> id();
       $foreign_key = lcfirst($called_class) . '_id';
-      $q = "SELECT * FROM $foreign_table WHERE $foreign_key=$self_id LIMIT 1";
+      $q = "SELECT * FROM $foreign_table WHERE $foreign_key=$self_id";
       $result = $db -> query($q);
       $rs = [];
       $foreign_class = substr($property, 0, (strlen($property) - 1)); // Assuming all plurals end in single 's'
       while ($r = $result -> fetch_array())
         $rs[] = $foreign_class::init($r);
-      if (count($rs) > 0)
+      if (count($rs) > 0){
         return $rs;
-      else
+	  }else
         return NULL;
     }
     return NULL;
   }
 
+  // PHP overloading: http://www.php.net/manual/en/language.oop5.overloading.php
   public static function __callStatic($name, $arguments) {
     if (strpos($name, 'find_by_') !== false || (strpos($name, 'find_all_by_') !== false)) {
     if (strpos($name, 'find_by_') !== false){
