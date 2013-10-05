@@ -1,4 +1,5 @@
 <?php
+	include_once('../helpers/initial_code.php');
 	include_once('../helpers/db_helper.php');
     include_once('../helpers/php_helper.php');
 	$bn = basename($_SERVER['SCRIPT_NAME'], '.php');
@@ -8,6 +9,12 @@
 	include_once($model_path);
 	include_once('../../config/routes.php');
   $controller_name = $p[0];
+
+  function loadRESTfulView($controllerName, $action, $_options) {
+    $path = "../views/$controllerName/$action.php";
+    $options = $_options;
+    include($path);
+  }
 
   function autoload($class_name) {
     include_once ('../models/' . lcfirst($class_name) . '.php');

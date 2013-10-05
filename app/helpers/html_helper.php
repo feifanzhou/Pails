@@ -34,21 +34,22 @@ function formattedRawDate($mysql_date, $format) {
  * @return string   <img /> tag corresponding to $img_name and $options
  */
 function image_tag($img_name, $options=[]) {
-  $img_path = str_replace("/images/","",$img_name);
+  $img_path = $img_name;
   if (!strpos($img_name, 'http') && !strpos($img_name, '/'))  {
+  	$img_path = str_replace("/images/","",$img_name);
     // Not path, so create path
     $path_beg = '/app/assets/images/';
     //$img_path = $path_beg . $img_path;
     $img_path = $path_beg . $img_path;
-	if (isset($options['size'])) {
-		$sizes = explode('x', $options['size']);
-		$params = '';
-		$params .= '&w=' . $sizes[0];
-		$params .= '&h=' . $sizes[1];
-		if(isset($options['align'])) //http://www.binarymoon.co.uk/2010/08/timthumb-part-4-moving-crop-location/
-			$params .= '&a=' . $options['align'];
-		$img_path =  '/vendor/timthumb/timthumb.php?src='.$img_path.$params;
-	}
+  	if (isset($options['size'])) {
+  		$sizes = explode('x', $options['size']);
+  		$params = '';
+  		$params .= '&w=' . $sizes[0];
+  		$params .= '&h=' . $sizes[1];
+  		if(isset($options['align'])) //http://www.binarymoon.co.uk/2010/08/timthumb-part-4-moving-crop-location/
+  			$params .= '&a=' . $options['align'];
+  		$img_path =  '/vendor/timthumb/timthumb.php?src='.$img_path.$params;
+  	}
   }
   $exp = explode('/', $img_path);
   $path_comp = array_pop($exp);
@@ -172,24 +173,22 @@ function link_to($obj, $link_text, $disp_col='', $slug='', $options=[]) {
  * @param  array $options       Additional HTML options
  * @return string               HTML button tag
  */
-function button_for($button_text, $button_class='', $button_id='', $options=[]) {
+function button_tag($button_text, $button_class='', $button_id='', $options=[]) {
   $opts = '';
   $attrs = '';
   $btn_cls = 'class="btn ' . $button_class . '"';
-  $btn_id = 'id="' . $button_id . '" ';
-  // if (isset($options['class']))
-  //   $opts .= ('class="' . $options['class'] . '" ');
-  // if (isset($options['id']))
-  //   $opts .= ('id="' . $options['id'] . '" ');
-
-  if (count($options) > 0)
+  $btn_id =  ($button_id) ? 'id="' . $button_id . '" ' : NULL;
+  if (is_array($options) && count($options) > 0)
     foreach($options as $k => $v)
       $attrs .= "$k='" . $v . "' ";
-
   $btn = "<button $btn_cls $btn_id $attrs>$button_text</button>";
-  echo $btn;
   return $btn;
 }
+
+function button_for($button_text, $button_class='', $button_id='', $options=[]) {
+  echo button_tag($button_text, $button_class, $button_id, $options);
+}
+
 
 /**
  * Creates a button with an associated link
@@ -201,7 +200,7 @@ function button_for($button_text, $button_class='', $button_id='', $options=[]) 
  * @return string               HTML button tag wrapped in a link
  */
 function button_to($button_text, $link_path='#', $button_class='', $button_id='', $options=[]) {
-  $btn = button_for($button_text, $button_class, $button_id, $options);
+  $btn = button_tag($button_text, $button_class, $button_id, $options);
   echo link_tag($btn, $link_path, $options);
 }
 
